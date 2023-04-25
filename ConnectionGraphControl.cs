@@ -14,8 +14,8 @@ namespace connection_winforms
         {
             InitializeComponent();
 
-            this.SetStyle(ControlStyles.AllPaintingInWmPaint 
-                        | ControlStyles.UserPaint 
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint
+                        | ControlStyles.UserPaint
                         | ControlStyles.DoubleBuffer, true);
 
             editor = new ConnectionGraphEditorTrait();
@@ -38,7 +38,7 @@ namespace connection_winforms
 
         private void ConnectionGraphControl_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Space)
+            if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter)
             {
                 editor.Logic.Trigger("esc");
                 Invalidate();
@@ -79,11 +79,25 @@ namespace connection_winforms
         {
             if (GraphInternals.Hovered.Count == 0)
             {
-                editor.Logic.Trigger("mousedown empty");
+                if (e.Button == MouseButtons.Left)
+                {
+                    editor.Logic.Trigger("mousedown left empty");
+                }
+                else
+                {
+                    editor.Logic.Trigger("mousedown right empty");
+                }
             }
             else
             {
-                editor.Logic.Trigger("mousedown node");
+                if (e.Button == MouseButtons.Left)
+                {
+                    editor.Logic.Trigger("mousedown left node");
+                }
+                else
+                {
+                    editor.Logic.Trigger("mousedown right node");
+                }
             }
             Invalidate();
         }
@@ -97,10 +111,16 @@ namespace connection_winforms
                 {
                     var r = editor.SelectingRect.Value;
                     r.W = Rendering.Mouse.X - r.X;
-                    r.H = Rendering.Mouse.Y - r.Y;                    
+                    r.H = Rendering.Mouse.Y - r.Y;
                     editor.SelectingRect = r;
                 }
             }
+
+            if (editor.Logic.IsMoving)
+            {
+                var delta = editor.UpdateMouseMoveDelta(Rendering.Mouse);
+            }
+
             this.Invalidate();
         }
 
@@ -108,11 +128,25 @@ namespace connection_winforms
         {
             if (GraphInternals.Hovered.Count == 0)
             {
-                editor.Logic.Trigger("mouseup empty");
+                if (e.Button == MouseButtons.Left)
+                {
+                    editor.Logic.Trigger("mouseup left empty");
+                }
+                else
+                {
+                    editor.Logic.Trigger("mouseup right empty");
+                }
             }
             else
             {
-                editor.Logic.Trigger("mouseup node");
+                if (e.Button == MouseButtons.Left)
+                {
+                    editor.Logic.Trigger("mouseup left node");
+                }
+                else
+                {
+                    editor.Logic.Trigger("mouseup right node");
+                }
             }
             Invalidate();
         }
@@ -121,7 +155,7 @@ namespace connection_winforms
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             graphics.Graphics = e.Graphics;
-            
+
             Rendering.DrawGrid(graphics, this.Width, this.Height);
 
             editor.Nodes.Sort();
@@ -134,15 +168,18 @@ namespace connection_winforms
 
             if (editor.ConnectingStartNode != null)
             {
-                graphics.DrawArrow(Tint.White, new List<Float2> { 
-                    editor.ConnectingStartNode.Origin, Rendering.Mouse 
+                graphics.DrawArrow(Tint.White, new List<Float2> {
+                    editor.ConnectingStartNode.Origin, Rendering.Mouse
                 }, false);
             }
 
-            if (editor.SelectingRect != null)
+            if (editor.SelectingRect != null && editor.SelectingRect.Value.W > 3 && editor.SelectingRect.Value.H > 3)
             {
                 graphics.DrawRectangle(Tint.White, editor.SelectingRect.Value);
             }
+
+            graphics.DrawText(Tint.Yellow, new Float2 { X = 10, Y = 10 }, $"Moving: {editor.Logic.IsMoving}");
+            graphics.DrawText(Tint.Yellow, new Float2 { X = 10, Y = 30 }, $"Editing: {editor.EditingLabelNode}");
         }
 
         private void ConnectionGraphControl_Resize(object sender, EventArgs e)
@@ -150,6 +187,27 @@ namespace connection_winforms
             if (this.Parent != null)
             {
                 this.Size = this.Parent.Size;
+            }
+        }
+
+        private void ConnectionGraphControl_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (editor.EditingLabelNode != null)
+            {
+                var text = editor.EditingLabelNode.GetTag("Label");
+
+                if (!char.IsControl(e.KeyChar))
+                {
+                    text += e.KeyChar;
+                    editor.EditingLabelNode.AddTag("Label", text);
+                }
+                else if (e.KeyChar == (char)8 && text.Length > 0)
+                {
+                    text = text.Substring(0, text.Length - 1);
+                    editor.EditingLabelNode.AddTag("Label", text);
+                }
+
+                Invalidate();
             }
         }
     }

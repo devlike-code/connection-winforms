@@ -65,11 +65,16 @@ namespace connection_winforms
 
         public Graphics Graphics { get; set; }
 
-        public void DrawArrow(Tint tint, List<Float2> points, bool bothEnds, int lineWidth = 1, int headWidth = 5, int headHeight = 5, int headDistance = 0)
+        public void DrawArrow(Tint tint, List<Float2> points, bool bothEnds, int lineWidth = 1, int headWidth = 5, int headHeight = 5, int headDistance = 0, bool dashed = false)
         {
             using (Pen p = new Pen(tint.ToColor(), lineWidth))
             using (GraphicsPath head = new GraphicsPath())
             {
+                if (dashed)
+                {
+                    p.DashStyle = DashStyle.Dash;
+                }
+
                 head.AddLine(headWidth, -headHeight - headDistance, 0, 0 - headDistance);
                 head.AddLine(0, 0 - headDistance, -headWidth, -headHeight - headDistance);
                 head.AddLine(-headWidth, -headHeight - headDistance, headWidth, -headHeight - headDistance);
@@ -118,11 +123,8 @@ namespace connection_winforms
         {
             using (var pen = new Pen(tint.ToColor(), lineWidth))
             {
-                var x = Math.Min(rect.X + rect.W, rect.X);
-                var y = Math.Min(rect.Y + rect.H, rect.Y);
-                var w = Math.Abs(rect.W);
-                var h = Math.Abs(rect.H);
-                Graphics.DrawRectangle(pen, x, y, w, h);
+                rect = rect.Normalized();
+                Graphics.DrawRectangle(pen, rect.X, rect.Y, rect.W, rect.H);
             }
         }
 

@@ -41,6 +41,7 @@ namespace connection_winforms
             Load += ConnectionGraphControl_Load;
             Paint += ConnectionGraphControl_Paint;
             KeyDown += ConnectionGraphControl_KeyDown;
+            KeyPress += ConnectionGraphControl_KeyPress;
             KeyUp += ConnectionGraphControl_KeyUp;
             MouseClick += ConnectionGraphControl_MouseClick;
             MouseDoubleClick += ConnectionGraphControl_MouseDoubleClick;
