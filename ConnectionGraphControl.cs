@@ -7,8 +7,47 @@ namespace connection_winforms
 {
     public partial class ConnectionGraphControl : UserControl
     {
-        private ConnectionGraphEditorTrait editor;
+        private GraphEditorTrait editor;
         private WinformsGraphics graphics;
+
+        public void Clear()
+        {
+            editor.Reset();
+            Invalidate();
+        }
+
+        public void StartSave()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.DefaultExt = "grasm";
+            saveFileDialog.Filter = "GRASM layouts (*.grasm)|*.grasm";
+            var result = saveFileDialog.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                editor.SaveToFile(saveFileDialog.FileName);
+            }
+            Invalidate();
+        }
+
+        public void StartLoad()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.DefaultExt = "grasm";
+            openFileDialog.Filter = "GRASM layouts (*.grasm)|*.grasm";
+            var result = openFileDialog.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                try
+                {
+                    editor.LoadFromFile(openFileDialog.FileName);
+                    Invalidate();
+                }
+                catch { }
+            }
+            
+        }
 
         public ConnectionGraphControl()
         {
@@ -18,7 +57,7 @@ namespace connection_winforms
                         | ControlStyles.UserPaint
                         | ControlStyles.DoubleBuffer, true);
 
-            editor = new ConnectionGraphEditorTrait();
+            editor = new GraphEditorTrait();
             graphics = new WinformsGraphics();
         }
 
@@ -28,12 +67,9 @@ namespace connection_winforms
 
         private void ConnectionGraphControl_Load(object sender, EventArgs e)
         {
+#if (DEBUG)
             AllocConsole();
-        }
-
-        private void ConnectionGraphControl_KeyDown(object sender, KeyEventArgs e)
-        {
-
+#endif
         }
 
         private void ConnectionGraphControl_KeyUp(object sender, KeyEventArgs e)
@@ -43,6 +79,21 @@ namespace connection_winforms
                 editor.Logic.Trigger("esc");
                 Invalidate();
             }
+            else if (e.KeyCode == Keys.S && e.Modifiers.HasFlag(Keys.Control))
+            {
+                StartSave();
+            }
+            else if (e.KeyCode == Keys.O && e.Modifiers.HasFlag(Keys.Control))
+            {
+                StartLoad();
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                editor.DeleteSelected();
+            }
+
+            editor.IsLinkingBothWays = ModifierKeys.HasFlag(Keys.Shift);
+            this.Invalidate();
         }
 
         private void ConnectionGraphControl_MouseClick(object sender, MouseEventArgs e)
@@ -120,6 +171,8 @@ namespace connection_winforms
             {
                 var delta = editor.UpdateMouseMoveDelta(Rendering.Mouse);
             }
+            
+            editor.IsLinkingBothWays = ModifierKeys.HasFlag(Keys.Shift);
 
             this.Invalidate();
         }
@@ -140,15 +193,17 @@ namespace connection_winforms
             else
             {
                 if (e.Button == MouseButtons.Left)
-                {
-                    editor.Logic.Trigger("mouseup left node");
+                {                    
+                    editor.Logic.Trigger("mouseup left node");                    
                 }
                 else
                 {
                     editor.Logic.Trigger("mouseup right node");
                 }
             }
-            Invalidate();
+
+            editor.IsLinkingBothWays = ModifierKeys.HasFlag(Keys.Shift);
+            this.Invalidate();
         }
 
         private void ConnectionGraphControl_Paint(object sender, PaintEventArgs e)
@@ -170,10 +225,10 @@ namespace connection_winforms
             {
                 graphics.DrawArrow(Tint.White, new List<Float2> {
                     editor.ConnectingStartNode.Origin, Rendering.Mouse
-                }, false);
+                }, editor.IsLinkingBothWays);
             }
 
-            if (editor.SelectingRect != null && editor.SelectingRect.Value.W > 3 && editor.SelectingRect.Value.H > 3)
+            if (editor.SelectingRect != null && Math.Abs(editor.SelectingRect.Value.W) >= 2 && Math.Abs(editor.SelectingRect.Value.H) >= 2)
             {
                 graphics.DrawRectangle(Tint.White, editor.SelectingRect.Value);
             }
@@ -188,6 +243,8 @@ namespace connection_winforms
             {
                 this.Size = this.Parent.Size;
             }
+
+            Invalidate();
         }
 
         private void ConnectionGraphControl_KeyPress(object sender, KeyPressEventArgs e)

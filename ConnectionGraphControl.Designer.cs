@@ -40,9 +40,9 @@ namespace connection_winforms
             Name = "ConnectionGraphControl";
             Load += ConnectionGraphControl_Load;
             Paint += ConnectionGraphControl_Paint;
-            KeyDown += ConnectionGraphControl_KeyDown;
             KeyPress += ConnectionGraphControl_KeyPress;
             KeyUp += ConnectionGraphControl_KeyUp;
+            KeyDown += ConnectionGraphControl_KeyDown;
             MouseClick += ConnectionGraphControl_MouseClick;
             MouseDoubleClick += ConnectionGraphControl_MouseDoubleClick;
             MouseDown += ConnectionGraphControl_MouseDown;
@@ -50,6 +50,12 @@ namespace connection_winforms
             MouseUp += ConnectionGraphControl_MouseUp;
             Resize += ConnectionGraphControl_Resize;
             ResumeLayout(false);
+        }
+
+        private void ConnectionGraphControl_KeyDown(object sender, KeyEventArgs e)
+        {
+            editor.IsLinkingBothWays = ModifierKeys.HasFlag(Keys.Shift);
+            this.Invalidate();
         }
 
         #endregion

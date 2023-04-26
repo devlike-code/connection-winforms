@@ -1,3 +1,6 @@
+using connection;
+using connection.UseCase;
+
 namespace connection_winforms
 {
     internal static class Program
@@ -10,6 +13,7 @@ namespace connection_winforms
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
+
             ApplicationConfiguration.Initialize();
             Application.Run(new ConnectionGraphEditor());
         }

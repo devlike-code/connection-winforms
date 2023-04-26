@@ -65,7 +65,7 @@ namespace connection_winforms
 
         public Graphics Graphics { get; set; }
 
-        public void DrawArrow(Tint tint, List<Float2> points, bool bothEnds, int lineWidth = 1, int headWidth = 5, int headHeight = 5, int headDistance = 0, bool dashed = false)
+        public void DrawArrow(Tint tint, List<Float2> points, bool bothEnds = false, int lineWidth = 1, int headWidth = 5, int headHeight = 5, int headDistance = 0, bool dashed = false)
         {
             using (Pen p = new Pen(tint.ToColor(), lineWidth))
             using (GraphicsPath head = new GraphicsPath())
@@ -117,6 +117,15 @@ namespace connection_winforms
             {
                 Graphics.DrawCurve(pen, points.Select(xy => new Point((int)xy.X, (int)xy.Y)).ToArray());
             } 
+        }
+
+        public void DrawArc(Tint tint, Float4 rect, int initial = 0, int arc = 360, int lineWidth = 1)
+        {
+            using (var pen = new Pen(tint.ToColor(), lineWidth))
+            {
+                rect = rect.Normalized();
+                Graphics.DrawArc(pen, rect.X, rect.Y, rect.W, rect.H, initial, arc);
+            }
         }
 
         public void DrawRectangle(Tint tint, Float4 rect, int lineWidth = 1)
