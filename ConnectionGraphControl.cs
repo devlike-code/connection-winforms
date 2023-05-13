@@ -10,6 +10,13 @@ namespace connection_winforms
         private GraphEditorTrait editor;
         private WinformsGraphics graphics;
 
+        public event NodeSelectionChanged? OnSelectionChanged;
+
+        public List<Node> GetSelection()
+        {
+            return GraphInternals.Selected.ToList();
+        }
+
         public void Clear()
         {
             editor.Reset();
@@ -59,6 +66,13 @@ namespace connection_winforms
 
             editor = new GraphEditorTrait();
             graphics = new WinformsGraphics();
+
+            editor.OnNodeSelectionChanged += Editor_OnNodeSelectionChanged;
+        }
+
+        private void Editor_OnNodeSelectionChanged(object sender, List<Node> selection)
+        {
+            this.OnSelectionChanged?.Invoke(this, selection);
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -221,7 +235,7 @@ namespace connection_winforms
                     node.Draw(graphics);
             }
 
-            if (editor.ConnectingStartNode != null)
+            if (editor.ConnectingStartNode != null && Float2.Distance(Rendering.Mouse, editor.ConnectingStartNode.Origin) > 6)
             {
                 graphics.DrawArrow(Tint.White, new List<Float2> {
                     editor.ConnectingStartNode.Origin, Rendering.Mouse
@@ -232,9 +246,6 @@ namespace connection_winforms
             {
                 graphics.DrawRectangle(Tint.White, editor.SelectingRect.Value);
             }
-
-            graphics.DrawText(Tint.Yellow, new Float2 { X = 10, Y = 10 }, $"Moving: {editor.Logic.IsMoving}");
-            graphics.DrawText(Tint.Yellow, new Float2 { X = 10, Y = 30 }, $"Editing: {editor.EditingLabelNode}");
         }
 
         private void ConnectionGraphControl_Resize(object sender, EventArgs e)
